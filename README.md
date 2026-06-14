@@ -1,7 +1,6 @@
 # SpreeDesk — Your place to work awaits in Berlin
 
-A runnable MVP of **SpreeDesk**, an on-demand coworking marketplace for Berlin —
-inspired by the structure of [Moar](https://moarbd.com/) but rebuilt for the
+A runnable MVP of **SpreeDesk**, an on-demand coworking marketplace for Berlin, built for the
 Berlin market with real locations, photography, a services menu and a full
 **cart → checkout** flow.
 
