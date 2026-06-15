@@ -1,0 +1,134 @@
+// SpreeDesk — Prisma schema (Berlin Edition)
+// Local dev uses SQLite. For production, switch provider to "postgresql".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      String   @default("member") // "member" | "operator"
+  createdAt DateTime @default(now())
+
+  operatorProfile OperatorProfile?
+  wallet          CreditWallet?
+  subscriptions   Subscription[]
+  bookings        Booking[]
+  orders          Order[]
+}
+
+model OperatorProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  company   String
+  plan      String   @default("Starter")
+  createdAt DateTime @default(now())
+
+  spaces Space[]
+}
+
+model Space {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  code          String   // short location code, e.g. "MIT"
+  name          String
+  tagline       String   // "Where History meets the Future"
+  district      String   // Berlin neighbourhood
+  blurb         String   // short description
+  description   String   // long description
+  amenities     String   // comma-separated
+  hours         String   @default("Mon–Sat · 8:00–22:00 · closed Sun")
+  rating        Float     @default(4.7)
+  reviewCount   Int      @default(0)
+  greenScore    Int      @default(75)
+  heroImage     String   // unsplash url
+  images        String   // comma-separated unsplash urls
+  lat           Float    @default(52.52)
+  lng           Float    @default(13.405)
+  address       String
+  desks         Int      @default(40)
+  rooms         Int      @default(3)
+  operatorId    String
+  operator      OperatorProfile @relation(fields: [operatorId], references: [id])
+  createdAt     DateTime @default(now())
+
+  seatTypes SeatType[]
+  bookings  Booking[]
+  perks     Perk[]
+}
+
+model SeatType {
+  id           String  @id @default(cuid())
+  spaceId      String
+  space        Space   @relation(fields: [spaceId], references: [id])
+  kind         String  // "hotdesk" | "meeting_room" | "private_office" | "event_venue"
+  label        String
+  pricePerHour Float
+  capacity     Int     @default(1)
+  available    Int     @default(10)
+  image        String  @default("")
+
+  bookings Booking[]
+}
+
+model Booking {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  spaceId     String
+  space       Space    @relation(fields: [spaceId], references: [id])
+  seatTypeId  String
+  seatType    SeatType @relation(fields: [seatTypeId], references: [id])
+  start       DateTime
+  hours       Int      @default(1)
+  status      String   @default("confirmed")
+  creditsUsed Int      @default(0)
+  amountPaid  Float    @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Perk {
+  id          String  @id @default(cuid())
+  spaceId     String?
+  space       Space?  @relation(fields: [spaceId], references: [id])
+  title       String
+  partner     String
+  description String
+  category    String  // coffee | mobility | wellness | events | community
+}
+
+model CreditWallet {
+  id      String @id @default(cuid())
+  userId  String @unique
+  user    User   @relation(fields: [userId], references: [id])
+  credits Int    @default(0)
+}
+
+model Subscription {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  plan     String
+  status   String   @default("active")
+  renewsAt DateTime
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  items     String   // JSON snapshot of cart items
+  subtotal  Float
+  discount  Float    @default(0)
+  total     Float
+  status    String   @default("paid")
+  createdAt DateTime @default(now())
+}
